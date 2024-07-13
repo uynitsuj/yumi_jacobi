@@ -10,8 +10,7 @@ root_dir = os.path.dirname(os.path.realpath(__file__))
 requirements = [
     "numpy",
     "autolab-core",
-    f"abb_librws @ file://localhost{root_dir}/extern/abb_librws",
-]
+    "jacobi-motion"]
 
 # load __version__ without importing anything
 version_file = os.path.join(os.path.dirname(__file__), "yumi_jacobi/version.py")
