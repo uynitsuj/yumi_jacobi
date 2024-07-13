@@ -1,0 +1,3 @@
+numpy
+autolab-core
+abb_librws@ file://localhost/home/justinyu/multicable-decluttering/yumi_jacobi/extern/abb_librws
