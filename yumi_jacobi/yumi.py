@@ -73,12 +73,16 @@ class YuMi_EGM(object):
         time.sleep(3)
 
     def move_grippers(self, lpos, rpos):
+        self.gripper_left.move_gripper(lpos)
+        self.gripper_right.move_gripper(rpos)
 
     def close_grippers(self):
+        self.gripper_left.close_gripper()
+        self.gripper_right.close_gripper()
 
     def open_grippers(self):
-        self.
-
+        self.gripper_left.open_gripper()
+        self.gripper_right.open_gripper()
 
 class YuMiSG(object):
     "SmartGripper interface for YuMi robot using Jacobi I/O signal hooks and interface for calling RAPID procedures"
