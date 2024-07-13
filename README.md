@@ -10,6 +10,7 @@ For instructions regrading installation, getting started, and for general docume
 The Jacobi Cloud Python package can be installed from PyPI via
 
 > pip install jacobi-motion
+> pip install -e .
 
 In case no package could be found, make sure to upgrade pip to the latest available version via pip install pip --upgrade.
 
