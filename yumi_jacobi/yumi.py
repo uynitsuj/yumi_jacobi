@@ -3,14 +3,6 @@ from jacobi.robots import ABBYuMiIRB14000 as Yumi
 from jacobi.drivers import ABBDriver
 from autolab_core import RigidTransform
 
-from .constants import (
-    M_TO_MM,
-    MM_TO_M,
-    SPEEDDATA_CONSTANTS,
-    ZONEDATA_CONSTANTS,
-    SLEEP_TIME,
-)
-
 class YuMi_EGM(object):
     """
     YuMi interface with EGM implementation from Jacobi Robotics plus SmartGripper Support
