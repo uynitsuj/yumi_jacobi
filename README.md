@@ -1,8 +1,5 @@
 # ABB YuMi IRB 14000 Jacobi Motion Wrapper
 
-Author: Justin Yu
-yujustin@berkeley.edu
-
 This YuMi wapper uses the **Jacobi Motion Library** for robot motion planning. Jacobi Motion provides a clean API for efficient algorithms that compute time-optimized, jerk-limited robot arm trajectories in milliseconds.
 
 Primary reason for the wrapper is to include SmartGripper functionality and interface.
