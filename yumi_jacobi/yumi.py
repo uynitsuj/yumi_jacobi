@@ -110,24 +110,29 @@ class YuMiSG(object):
     def initialize_gripper(self):
         self._set_signal(self._gripper_state_IO, 1)
         self._driver.rws.call_procedure('handleRunSGRoutine')
+        self._driver.rws.call_procedure('egm')
 
     def calibrate_gripper(self):
         self._set_signal(self._gripper_state_IO, 2)
         self._driver.rws.call_procedure('handleRunSGRoutine')
+        self._driver.rws.call_procedure('egm')
 
     def open_gripper(self):
         self._set_signal(self._gripper_state_IO, 5)
         self._driver.rws.call_procedure('handleRunSGRoutine')
+        self._driver.rws.call_procedure('egm')
 
     def close_gripper(self):
         self._set_signal(self._gripper_state_IO, 4)
         self._driver.rws.call_procedure('handleRunSGRoutine')
+        self._driver.rws.call_procedure('egm')
 
     def move_gripper(self, value):
         "Value is valid between 0 to 25 (Physical gripper travel range in [mm]), though pendant modules have extra check and saturate values"
         self._set_signal(self._gripper_pos_IO, value)
         self._set_signal(self._gripper_state_IO, 3)
         self._driver.rws.call_procedure('handleRunSGRoutine')
+        self._driver.rws.call_procedure('egm')
 
     ## cmd_GripperState_ controls ##
     #     COMMAND_NONE         := 0;
