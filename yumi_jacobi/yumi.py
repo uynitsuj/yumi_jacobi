@@ -2,6 +2,7 @@ from jacobi import Planner, Frame, CartesianWaypoint, LinearMotion
 from jacobi.robots import ABBYuMiIRB14000 as Yumi
 from jacobi.drivers import ABBDriver
 from autolab_core import RigidTransform
+import time
 
 class YuMi_EGM(object):
     """
@@ -19,11 +20,11 @@ class YuMi_EGM(object):
 
         self.yumi = Yumi()
         self.yumi.set_speed(0.14)
-
+        self.planner = Planner(self.yumi)
         module = self._instantiate_module('ROB_L')
-
+        
         self.driver_left = ABBDriver(
-            planner, yumi.left,
+            self.planner, self.yumi.left,
             host=ip_address, port=6511,
             module=module, version=ABBDriver.RobotWareVersion.RobotWare6,
         )
@@ -32,7 +33,7 @@ class YuMi_EGM(object):
         module = self._instantiate_module('ROB_R')
 
         self.driver_right = ABBDriver(
-            planner, yumi.right,
+            self.planner, self.yumi.right,
             host=ip_address, port=6512,
             module=module, version=ABBDriver.RobotWareVersion.RobotWare6,
         )
@@ -108,20 +109,25 @@ class YuMiSG(object):
 
     def initialize_gripper(self):
         self._set_signal(self._gripper_state_IO, 1)
+        self._driver.rws.call_procedure('handleRunSGRoutine')
 
     def calibrate_gripper(self):
         self._set_signal(self._gripper_state_IO, 2)
+        self._driver.rws.call_procedure('handleRunSGRoutine')
 
     def open_gripper(self):
         self._set_signal(self._gripper_state_IO, 5)
+        self._driver.rws.call_procedure('handleRunSGRoutine')
 
     def close_gripper(self):
         self._set_signal(self._gripper_state_IO, 4)
+        self._driver.rws.call_procedure('handleRunSGRoutine')
 
     def move_gripper(self, value):
         "Value is valid between 0 to 25 (Physical gripper travel range in [mm]), though pendant modules have extra check and saturate values"
         self._set_signal(self._gripper_pos_IO, value)
         self._set_signal(self._gripper_state_IO, 3)
+        self._driver.rws.call_procedure('handleRunSGRoutine')
 
     ## cmd_GripperState_ controls ##
     #     COMMAND_NONE         := 0;
