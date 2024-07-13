@@ -32,7 +32,7 @@ setup(
     author="Justin Yu",
     author_email="yujustin@berkeley.edu",
     license="MIT Software License",
-    url="https://github.com/BerkeleyAutomation/yumi_jacobi",
+    url="https://github.com/uynitsuj/yumi_jacobi",
     keywords="robotics grasping",
     classifiers=[
         "Development Status :: 4 - Beta",
