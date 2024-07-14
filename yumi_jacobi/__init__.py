@@ -1,1 +1,1 @@
-from .yumi import YuMi_EGM
+from .yumi import YuMiArm
