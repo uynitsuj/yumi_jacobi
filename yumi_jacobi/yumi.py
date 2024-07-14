@@ -84,7 +84,7 @@ class YuMiArm(ABBDriver):
         return True
           
     async def move_gripper(self, value, sync=False):
-        "Value is valid between 0 to 25 (Physical gripper travel range in [mm]), though pendant modules have extra check and saturate values"
+        "Value is valid between 0 to 25 (Physical gripper travel range in [mm]), though RAPID modules have extra check and will saturate values"
         self._set_signal(self._gripper_pos_IO, value)
         self._set_signal(self._gripper_state_IO, 3)
         if not sync:
