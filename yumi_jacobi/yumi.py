@@ -1,8 +1,5 @@
-import multiprocessing as mp
-from jacobi import Planner
-from jacobi.robots import ABBYuMiIRB14000 as Yumi
 from jacobi.drivers import ABBDriver
-from autolab_core import RigidTransform
+from autolab_core import RigidTransform # To support later
 import time
 from enum import Enum
 class GripperState(Enum):
@@ -85,7 +82,6 @@ class YuMiArm(ABBDriver):
             self._set_signal('RUN_SG_ROUTINE', 0)
             self._set_signal(self._gripper_state_IO, 0)
         return True
-
           
     async def move_gripper(self, value, sync=False):
         "Value is valid between 0 to 25 (Physical gripper travel range in [mm]), though pendant modules have extra check and saturate values"
