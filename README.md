@@ -15,7 +15,7 @@ The Jacobi Cloud Python package can be installed from PyPI via
 In case no package could be found, make sure to upgrade pip to the latest available version via pip install pip --upgrade.
 
 ## Getting Started
-Please refer to the [test_interface.py](https://github.com/uynitsuj/yumi_jacobi/blob/master/starter_examples/test_interface.py) file for an example on how to use the wrapper interface for the YuMi robot.
+Please refer to the [test_interface.py](https://github.com/uynitsuj/yumi_jacobi/blob/master/starter_examples/test_interface.py) file for an example on how to use the wrapper interface for the YuMi robot. Please also refer the [Jacobi Documentation](https://docs.jacobirobotics.com) as necessary as my `Interface` class contains two `YuMiArm` robot driver classes (one per arm) which inherit from Jacobi's `ABBDriver` class.
 
 ## License
 The Cloud version requires an API key for authentication that you can access at your user account at account.jacobirobotics.com. You can pass this to the motion library by setting the JACOBI_API_KEY and JACOBI_API_SECRET environment variable.
