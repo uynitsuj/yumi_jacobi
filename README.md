@@ -4,19 +4,27 @@ This YuMi wapper uses the **Jacobi Motion Library** for robot motion planning wi
 
 Primary reason for the wrapper is to include YuMi IRB 14000 [SmartGripper](https://library.e.abb.com/public/6c35d74e5be34fcb93bf6810c449a2bd/3HAC054949%20PM%20IRB%2014000%20Gripper-en.pdf) functionality and interface. All motion planning functionality is taken care of by the Jacobi interface.
 
-For instructions regrading installation, getting started, and for general documentation refer to [docs.jacobirobotics.com](https://docs.jacobirobotics.com).
+For instructions regarding installation, getting started, and for general documentation refer to [docs.jacobirobotics.com](https://docs.jacobirobotics.com).
 
 ## Installation
 The Jacobi Cloud Python package can be installed from PyPI via
 
 ```
 pip install jacobi-motion
-pip install -e .
 ```
 
 In case no package could be found, make sure to upgrade pip to the latest available version via pip install pip --upgrade.
 
 Alternatively, go to the downloads page for [Jacobi Motion](https://account.jacobirobotics.com/downloads/jacobi-motion) and [Jacobi Driver](https://account.jacobirobotics.com/downloads/jacobi-drivers) and download the appropriate Python wheels and ABB robot drivers manually.
+
+Then install this package with:
+```
+pip install -e .
+```
+which will allow you to simply import the robot wrapper interface with:
+```
+from yumi_jacobi.interface import Interface
+```
 
 ## Getting Started
 Please refer to the [test_interface.py](https://github.com/uynitsuj/yumi_jacobi/blob/master/starter_examples/test_interface.py) file for an example on how to use the wrapper interface for the YuMi robot. Please also refer the [Jacobi Documentation](https://docs.jacobirobotics.com) as necessary as my `Interface` class contains two `YuMiArm` robot driver classes (one per arm) which inherit from Jacobi's `ABBDriver` class.
