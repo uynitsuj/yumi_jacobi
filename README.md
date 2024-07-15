@@ -9,10 +9,14 @@ For instructions regrading installation, getting started, and for general docume
 ## Installation
 The Jacobi Cloud Python package can be installed from PyPI via
 
-> pip install jacobi-motion
-> pip install -e .
+```
+pip install jacobi-motion
+pip install -e .
+```
 
 In case no package could be found, make sure to upgrade pip to the latest available version via pip install pip --upgrade.
+
+Alternatively, go to the downloads page for [Jacobi Motion](https://account.jacobirobotics.com/downloads/jacobi-motion) and [Jacobi Driver](https://account.jacobirobotics.com/downloads/jacobi-drivers) and download the appropriate Python wheels and ABB robot drivers manually.
 
 ## Getting Started
 Please refer to the [test_interface.py](https://github.com/uynitsuj/yumi_jacobi/blob/master/starter_examples/test_interface.py) file for an example on how to use the wrapper interface for the YuMi robot. Please also refer the [Jacobi Documentation](https://docs.jacobirobotics.com) as necessary as my `Interface` class contains two `YuMiArm` robot driver classes (one per arm) which inherit from Jacobi's `ABBDriver` class.
