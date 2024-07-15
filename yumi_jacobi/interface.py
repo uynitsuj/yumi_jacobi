@@ -28,9 +28,9 @@ class Interface:
         -1.34913424,
         0.73567095,
         0.23, 
-        1.46,
+        1.56402364,
         1.25265177,
-        2.940,
+        2.9580,
     ]
     )
     R_ARMS_CLEAR_STATE = np.array(
@@ -39,7 +39,7 @@ class Interface:
             -1.34920282,
             -0.74859683,
             0.22,
-            -1.535,
+            -1.64836569,
             1.20916355,
             -2.83024169,
         ]
@@ -49,20 +49,21 @@ class Interface:
         speed=0.14,
         l_tcp=ABB_WHITE.as_frames("l_tcp_frame", "l_tip_frame"),
         r_tcp=ABB_WHITE.as_frames("r_tcp_frame", "r_tip_frame"),
-        file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/AUTOLAB_BWW_YuMi.jacobi-project',
+        file=None,
     ):
         
         self.speed = speed
         
         self.l_tcp = l_tcp
         self.r_tcp = r_tcp
-
-        if os.path.exists(file):
-            self.planner = Planner.load_from_project_file(file)
-            self.environment = self.planner.environment
-            self.yumi = self.environment.get_robot()
-            self.yumi.set_speed(speed)
-            self.studio = Studio()
+        
+        if file is not None:
+            if os.path.exists(file):
+                self.planner = Planner.load_from_project_file(file)
+                self.environment = self.planner.environment
+                self.yumi = self.environment.get_robot()
+                self.yumi.set_speed(speed)
+                self.studio = Studio()
         else:
             self.yumi = Yumi()
             self.yumi.set_speed(speed)
@@ -186,6 +187,7 @@ class Interface:
 
     async def go_cartesian(self, l_targets: List[RigidTransform]=[], r_targets: List[RigidTransform]=[]):
         # Move both arms to waypoint [RigidTransform] or along specified waypoints (list of RigidTransforms)
+        # Currently Jacobi supports up to 2 waypoints
         assert (len(l_targets) > 0 or len(r_targets) > 0), "No waypoints provided"
         if len(l_targets) > 0:
             motion = self.listRT2Motion(
@@ -194,6 +196,8 @@ class Interface:
                 wp_list = l_targets
             )
             trajectory = self.planner.plan(motion)
+            if self.studio is not None:
+                self.studio.run_trajectory(trajectory)
             result_left = self.driver_left.run_async(trajectory)
             await result_left
         if len(r_targets) > 0:
@@ -203,12 +207,14 @@ class Interface:
                 wp_list = r_targets
             )
             trajectory = self.planner.plan(motion)
+            if self.studio is not None:
+                self.studio.run_trajectory(trajectory)
             result_right = self.driver_right.run_async(trajectory)
             await result_right
 
     def listRT2Motion(self, robot, start: List, wp_list: List[RigidTransform]) -> Motion:
         # Convert list of RigidTransform to Motion (Jacobi object) 
-        # Currently supports up to 3 waypoints
+        # Currently Jacobi supports up to 2 waypoints
         motion = Motion(
             robot, 
             start,
