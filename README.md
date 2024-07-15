@@ -2,7 +2,7 @@
 
 This YuMi wapper uses the **Jacobi Motion Library** for robot motion planning with Externally Guided Motion (EGM). Jacobi Motion provides a clean API for efficient algorithms that compute time-optimized, jerk-limited robot arm trajectories in milliseconds.
 
-Primary reason for the wrapper is to include YuMi IRB 14000 [SmartGripper](https://library.e.abb.com/public/6c35d74e5be34fcb93bf6810c449a2bd/3HAC054949%20PM%20IRB%2014000%20Gripper-en.pdf) functionality and interface. All motion planning functionality is taken care of by the Jacobi interface.
+Primary reason for the wrapper is to include YuMi IRB 14000 [SmartGripper](https://library.e.abb.com/public/6c35d74e5be34fcb93bf6810c449a2bd/3HAC054949%20PM%20IRB%2014000%20Gripper-en.pdf) functionality and interface which is not natively supported through Jacobi at this time. Custom RAPID Modules for the Smartgrippers were uploaded onto the pendant, so for any inquiries about adding SmartGripper support please direct email inquiries to yujustin@berkeley.edu. All motion planning functionality is taken care of by the Jacobi interface.
 
 For instructions regarding installation, getting started, and for general documentation refer to [docs.jacobirobotics.com](https://docs.jacobirobotics.com).
 
