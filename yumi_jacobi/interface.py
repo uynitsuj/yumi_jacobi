@@ -102,6 +102,15 @@ class Interface:
             return self.yumi.right.calculate_tcp(self.driver_right.current_joint_position)
         else:
             raise ValueError(f"Invalid arm {arm}, enter 'left' or 'right'")
+    
+    def get_joint_positions(self, arm: str):
+        if arm == 'left':
+            return self.driver_left.current_joint_position
+        elif arm == 'right':
+            return self.driver_right.current_joint_position
+        else:
+            raise ValueError(f"Invalid arm {arm}, enter 'left' or 'right'")
+        
     async def calibrate_grippers(self):
         await self.driver_left.calibrate_gripper(sync=True)
         await asyncio.sleep(0.1)
@@ -147,14 +156,16 @@ class Interface:
         self.yumi.set_speed(self.speed)
 
         await self.move_to(self.L_ARMS_CLEAR_STATE, self.R_ARMS_CLEAR_STATE)
-
+        return True
+    
     async def move_to(self, left_goal = None, right_goal=None):
         # Move both arms to the specified joint angles (radians)
         result_left = self.driver_left.move_to_async(left_goal)
         result_right = self.driver_right.move_to_async(right_goal)
         await result_left
         await result_right
-
+        return True
+    
     async def go_delta(self, left_delta: List = [0, 0, 0], right_delta: List = [0, 0, 0]):
         # Move both arms by the specified cartesian delta [x,y,z], meant for small motions
         l_curr_pos = self.yumi.left.calculate_tcp(self.driver_left.current_joint_position)
@@ -185,9 +196,10 @@ class Interface:
         await result_left
         await result_right
 
-    async def go_cartesian(self, l_targets: List[RigidTransform]=[], r_targets: List[RigidTransform]=[]):
+    async def go_cartesian_waypoints(self, l_targets: List[RigidTransform]=[], r_targets: List[RigidTransform]=[]):
         # Move both arms to waypoint [RigidTransform] or along specified waypoints (list of RigidTransforms)
-        # Currently Jacobi supports up to 2 waypoints
+        # Currently Jacobi supports up to 3 waypoints
+        # Currently left executes before right arm; looking into simultaneous execution
         assert (len(l_targets) > 0 or len(r_targets) > 0), "No waypoints provided"
         if len(l_targets) > 0:
             motion = self.listRT2Motion(
@@ -212,6 +224,33 @@ class Interface:
             result_right = self.driver_right.run_async(trajectory)
             await result_right
 
+    async def go_linear(self, l_target: RigidTransform=None, r_target: RigidTransform=None):
+        # Move both arms linearly to the specified waypoint
+        assert (l_target is not None or r_target is not None), "No waypoints provided"
+        if l_target is not None:
+            motion = LinearMotion(
+                robot = self.yumi.left,
+                start = self.driver_left.current_joint_position,
+                goal = self.RT2Frame(l_target)
+            )
+            trajectory = self.planner.plan(motion)
+            if self.studio is not None:
+                self.studio.run_trajectory(trajectory)
+            result_left = self.driver_left.run_async(trajectory)
+            await result_left
+        if r_target is not None:
+            motion = LinearMotion(
+                robot = self.yumi.right,
+                start = self.driver_right.current_joint_position,
+                goal = self.RT2Frame(r_target)
+            )
+            trajectory = self.planner.plan(motion)
+            if self.studio is not None:
+                self.studio.run_trajectory(trajectory)
+            result_right = self.driver_right.run_async(trajectory)
+            await result_right
+
+
     def listRT2Motion(self, robot, start: List, wp_list: List[RigidTransform]) -> Motion:
         # Convert list of RigidTransform to Motion (Jacobi object) 
         # Currently Jacobi supports up to 2 waypoints
@@ -220,7 +259,7 @@ class Interface:
             start,
             self.RT2Frame(wp_list[-1])
         )
-        motion.waypoints = [self.RT2Frame(q) for q in wp_list]
+        motion.waypoints = [self.RT2Frame(q) for q in wp_list[:-1]]
         return motion
 
     def RT2CW(self, transform: RigidTransform) -> CartesianWaypoint:
