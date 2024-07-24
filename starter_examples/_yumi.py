@@ -12,19 +12,18 @@ async def run():
     planner = Planner(yumi)
 
     # From a fresh robot start, need to run twice to upload T_ROB_R before T_ROB_L starts
-    module = ABBDriver.RapidModule(unit='ROB_L')
-    module.upload = False # TURN THIS TO FALSE OTHERWISE PENDANT MODULES GET OVERWRITTEN
-    driver_left = ABBDriver(
-        planner, yumi.left,
-        host='192.168.125.1', port=6511,
-        module=module, version=ABBDriver.RobotWareVersion.RobotWare6,
-    )
-
     module = ABBDriver.RapidModule(unit='ROB_R')
     module.upload = False # TURN THIS TO FALSE OTHERWISE PENDANT MODULES GET OVERWRITTEN
     driver_right = ABBDriver(
         planner, yumi.right,
         host='192.168.125.1', port=6512,
+        module=module, version=ABBDriver.RobotWareVersion.RobotWare6,
+    )
+    module = ABBDriver.RapidModule(unit='ROB_L')
+    module.upload = False # TURN THIS TO FALSE OTHERWISE PENDANT MODULES GET OVERWRITTEN
+    driver_left = ABBDriver(
+        planner, yumi.left,
+        host='192.168.125.1', port=6511,
         module=module, version=ABBDriver.RobotWareVersion.RobotWare6,
     )
 

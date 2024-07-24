@@ -1,21 +1,15 @@
 from yumi_jacobi.interface import Interface
 from autolab_core import RigidTransform, Point
-import asyncio
+# import asyncio
 
-async def run():
-    interface = Interface(speed=0.25, file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/AUTOLAB_BWW_YuMi.jacobi-project')
+def run():
+    interface = Interface(speed=0.23, file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/AUTOLAB_BWW_YuMi.jacobi-project')
     print(interface.Frame2RT(interface.get_FK('left')))
     print(interface.Frame2RT(interface.get_FK('right')))
-    await interface.home()
+    interface.home()
 
-    await interface.calibrate_grippers()
-    await interface.open_grippers()
-    await interface.go_delta([0, 0, -0.1])
-    await interface.go_delta([0, -0.1, 0], [0, 0.1, 0])
-    # print(interface.Frame2RT(interface.get_FK('left')))
-    # print(interface.Frame2RT(interface.get_FK('right')))
-    await interface.go_delta([0.1, -0.1, 0], [0.1, 0.1, 0])
-    await interface.home()
+    interface.calibrate_grippers()
+    interface.open_grippers()
 
     wp1_l = RigidTransform(
         rotation=[[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
@@ -41,10 +35,16 @@ async def run():
         rotation=[[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
         translation=[0.5, -0.1, 0.25]
     )
-    await interface.go_cartesian(l_targets = [wp1_l, wp2_l, wp3_l], r_targets=[wp1_r, wp2_r, wp3_r])
-    await interface.home()
-
-    await interface.go_linear(l_target=)
+    interface.go_cartesian_waypoints(l_targets = [wp1_l, wp2_l, wp3_l], r_targets=[wp1_r, wp2_r, wp3_r])
+    interface.home()
+    
+    interface.go_delta([0, 0, -0.1])
+    interface.go_delta([0, -0.1, 0], [0, 0.1, 0])
+    # print(interface.Frame2RT(interface.get_FK('left')))
+    # print(interface.Frame2RT(interface.get_FK('right')))
+    interface.go_delta([0.1, -0.1, 0], [0.1, 0.1, 0])
+    interface.home()
+    # await interface.go_linear(l_target=)
 
 if __name__ == '__main__':
-    asyncio.run(run())
+    run()
