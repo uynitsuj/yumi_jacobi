@@ -75,14 +75,14 @@ class Interface:
         '''
         return self._run_coroutine(self._async_interface.go_delta(left_delta, right_delta))
 
-    def go_cartesian_waypoints(self, l_targets=[], r_targets=[]):
+    def go_cartesian_waypoints(self, l_targets: List[RigidTransform] = [], r_targets: List[RigidTransform] = []):
         '''
         Move both arms to waypoint [RigidTransform] or along specified waypoints (list of RigidTransforms)
         Currently Jacobi supports up to 3 waypoints
         '''
         return self._run_coroutine(self._async_interface.go_cartesian_waypoints(l_targets, r_targets))
 
-    def go_linear_single(self, l_target=None, r_target=None):
+    def go_linear_single(self, l_target: RigidTransform = None, r_target: RigidTransform = None):
         '''
         Move both arms linearly to the specified waypoint
         '''
@@ -99,9 +99,6 @@ class Interface:
         Get the joint positions of the specified arm, returns a list of joint angles (radians)
         '''
         return self._async_interface.get_joint_positions(arm)
-
-    def set_TCP(self):
-        return self._async_interface.set_TCP()
 
     def RT2Frame(self, transform: RigidTransform) -> Frame:
         '''
