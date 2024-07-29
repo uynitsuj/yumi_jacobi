@@ -16,6 +16,11 @@ import time
 import threading
 
 class Interface:
+    GRIP_DOWN_R = np.diag([1, -1, -1])
+    GRIP_DOWN_L = np.diag([-1, 1, -1])
+    GRIP_UP_R = np.diag([1, 1, 1])
+    GRIP_SIDEWAYS = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
+    
     def __init__(self, *args, **kwargs):
         self._async_interface = AsyncInterface(*args, **kwargs)
         self._loop = asyncio.new_event_loop()
@@ -129,7 +134,12 @@ class Interface:
         Convert Frame (Jacobi object) to RigidTransform (autolab_core)
         '''
         return self._async_interface.Frame2RT(frame)
-
+    
+    def listRT2Motion(self, robot, start: List, wp_list: List[RigidTransform]) -> Motion:
+        '''
+        Convert list of RigidTransform to Motion (Jacobi object) 
+        '''
+        return self._async_interface.listRT2Motion(robot, start, wp_list)
 class AsyncInterface:
     # orientation where the gripper is facing downwards
     GRIP_DOWN_R = np.diag([1, -1, -1])
@@ -282,10 +292,11 @@ class AsyncInterface:
         return result_left, result_right
     
     async def move_to(self, left_goal = None, right_goal=None, ignore_collisions=False):
-        result_left = self.driver_left.move_to_async(left_goal, ignore_collisions=ignore_collisions)
-        result_right = self.driver_right.move_to_async(right_goal, ignore_collisions=ignore_collisions)
-        await result_left
-        await result_right
+        result_left, result_right = None, None
+        if left_goal is not None: result_left = self.driver_left.move_to_async(left_goal, ignore_collisions=ignore_collisions)
+        if right_goal is not None: result_right = self.driver_right.move_to_async(right_goal, ignore_collisions=ignore_collisions)
+        if left_goal is not None: await result_left
+        if right_goal is not None: await result_right
         return result_left, result_right
     
     async def go_delta(self, left_delta: List = [0, 0, 0], right_delta: List = [0, 0, 0]):
@@ -324,6 +335,7 @@ class AsyncInterface:
 
     async def go_cartesian_waypoints(self, l_targets: List[RigidTransform]=[], r_targets: List[RigidTransform]=[]):
         assert (len(l_targets) > 0 or len(r_targets) > 0), "No waypoints provided"
+        result_left, result_right = None, None
         if len(l_targets) > 0:
             motion = self.listRT2Motion(
                 robot = self.yumi.left,
@@ -349,15 +361,16 @@ class AsyncInterface:
         if self.studio is not None and self.visualize:
             self.studio.run_trajectory(trajectory_l)
             self.studio.run_trajectory(trajectory_r)
-                
-        result_left = self.driver_left.run_async(trajectory_l)
-        result_right = self.driver_right.run_async(trajectory_r)
-        await result_left
-        await result_right
+            
+        if len(l_targets) > 0: result_left = self.driver_left.run_async(trajectory_l)
+        if len(r_targets) > 0: result_right = self.driver_right.run_async(trajectory_r)
+        if len(l_targets) > 0: await result_left
+        if len(r_targets) > 0: await result_right
         return result_left, result_right
 
     async def go_linear_single(self, l_target: RigidTransform=None, r_target: RigidTransform=None):
         assert (l_target is not None or r_target is not None), "No linear targets provided"
+        result_left, result_right = None, None
         if l_target is not None:
             motion = LinearMotion(
                 robot = self.yumi.left,
@@ -381,13 +394,13 @@ class AsyncInterface:
             print(f"[go_linear_single] Time to plan right arm linear: {elapsed_time:.3f} ms")
             
         if self.studio is not None and self.visualize:
-            self.studio.run_trajectory(trajectory_l)
-            self.studio.run_trajectory(trajectory_r)
+            if l_target is not None: self.studio.run_trajectory(trajectory_l)
+            if r_target is not None: self.studio.run_trajectory(trajectory_r)
         
-        result_left = self.driver_left.run_async(trajectory_l)
-        result_right = self.driver_right.run_async(trajectory_r)
-        await result_right
-        await result_left
+        if l_target is not None: result_left = self.driver_left.run_async(trajectory_l)
+        if r_target is not None: result_right = self.driver_right.run_async(trajectory_r)
+        if l_target is not None: await result_left
+        if r_target is not None: await result_right
         return result_left, result_right
 
     def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], starting_from_current_cfg = True) -> Tuple[Motion, Motion]:
