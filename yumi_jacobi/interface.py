@@ -216,6 +216,7 @@ class AsyncInterface:
         )
 
         self.set_TCP()
+        self.print_timing = True
 
     def set_TCP(self):
         self.yumi.left.flange_to_tcp = self.RT2Frame(self.l_tcp)
@@ -331,20 +332,22 @@ class AsyncInterface:
             self.yumi.right: CartesianWaypoint(r_goal),
         },
         )
-        elapsed_time = (time.time() - start_time) * 1000 
-        print(f"[go_delta] Time to plan dual arm deltas: {elapsed_time:.3f} ms")
+        if self.print_timing:
+            elapsed_time = (time.time() - start_time) * 1000 
+            print(f"[go_delta] Time to plan dual arm deltas: {elapsed_time:.3f} ms")
 
         if self.studio is not None and self.visualize:
             self.studio.run_trajectory(trajectory)
-            
-        start_time = time.time()
-        print("[go_delta] Sent trajectory and starting signal listener at time: ", start_time)
+        if self.print_timing:
+            start_time = time.time()
+            print("[go_delta] Sent trajectory and starting signal listener at time: ", start_time)
         
         result_left = self.driver_left.run_async(trajectory)
         result_right = self.driver_right.run_async(trajectory)
         
         result_stationary = await self.stationary_signal_listener()
-        print(f"[go_delta] Time to deploy: {(result_stationary - start_time)*1000} ms")
+        if self.print_timing:
+            print(f"[go_delta] Time to deploy: {(result_stationary - start_time)*1000} ms")
         
         await result_left
         await result_right
@@ -361,7 +364,8 @@ class AsyncInterface:
             )
             start_time = time.time()
             trajectory_l = self.planner.plan(motion)
-            elapsed_time = (time.time() - start_time) * 1000 
+            if self.print_timing:
+                elapsed_time = (time.time() - start_time) * 1000 
             print(f"[go_cartesian_waypoints] Time to plan left arm waypoints: {elapsed_time:.3f} ms")
                
         if len(r_targets) > 0:
@@ -372,15 +376,17 @@ class AsyncInterface:
             )
             start_time = time.time()
             trajectory_r = self.planner.plan(motion)
-            elapsed_time = (time.time() - start_time) * 1000 
-            print(f"[go_cartesian_waypoints] Time to plan right arm waypoints: {elapsed_time:.3f} ms")
+            if self.print_timing:
+                elapsed_time = (time.time() - start_time) * 1000 
+                print(f"[go_cartesian_waypoints] Time to plan right arm waypoints: {elapsed_time:.3f} ms")
             
         if self.studio is not None and self.visualize:
             self.studio.run_trajectory(trajectory_l)
             self.studio.run_trajectory(trajectory_r)
-            
-        start_time = time.time()
-        print("[go_cartesian_waypoints] Sent trajectory and starting signal listener at time: ", start_time)
+        
+        if self.print_timing:
+            start_time = time.time()
+            print("[go_cartesian_waypoints] Sent trajectory and starting signal listener at time: ", start_time)
         
         if len(l_targets) > 0: result_left = self.driver_left.run_async(trajectory_l)
         if len(r_targets) > 0: result_right = self.driver_right.run_async(trajectory_r)
@@ -403,8 +409,9 @@ class AsyncInterface:
             )
             start_time = time.time()
             trajectory_l = self.planner.plan(motion)
-            elapsed_time = (time.time() - start_time) * 1000 
-            print(f"[go_linear_single] Time to plan left arm linear: {elapsed_time:.3f} ms")
+            if self.print_timing:
+                elapsed_time = (time.time() - start_time) * 1000 
+                print(f"[go_linear_single] Time to plan left arm linear: {elapsed_time:.3f} ms")
                 
         if r_target is not None:
             motion = LinearMotion(
@@ -414,22 +421,24 @@ class AsyncInterface:
             )
             start_time = time.time()
             trajectory_r = self.planner.plan(motion)
-            elapsed_time = (time.time() - start_time) * 1000 
-            print(f"[go_linear_single] Time to plan right arm linear: {elapsed_time:.3f} ms")
+            if self.print_timing:
+                elapsed_time = (time.time() - start_time) * 1000 
+                print(f"[go_linear_single] Time to plan right arm linear: {elapsed_time:.3f} ms")
             
         if self.studio is not None and self.visualize:
             if l_target is not None: self.studio.run_trajectory(trajectory_l)
             if r_target is not None: self.studio.run_trajectory(trajectory_r)
         
-        
-        start_time = time.time()
-        print("[go_linear_single] Sent trajectory and starting signal listener at time: ", start_time)
+        if self.print_timing:
+            start_time = time.time()
+            print("[go_linear_single] Sent trajectory and starting signal listener at time: ", start_time)
         
         if l_target is not None: result_left = self.driver_left.run_async(trajectory_l)
         if r_target is not None: result_right = self.driver_right.run_async(trajectory_r)
         
         result_stationary = await self.stationary_signal_listener()
-        print(f"[go_linear_single] Time to deploy: {(result_stationary - start_time)*1000} ms")
+        if self.print_timing:
+            print(f"[go_linear_single] Time to deploy: {(result_stationary - start_time)*1000} ms")
         
         if l_target is not None: await result_left
         if r_target is not None: await result_right
@@ -445,7 +454,8 @@ class AsyncInterface:
             )
             start_time = time.time()
             trajectory_l = self.planner.plan(motion)
-            print(f"[plan_cartesian_waypoints] Time to plan left arm waypoints: {(time.time() - start_time)*1000:.3f} ms")
+            if self.print_timing:
+                print(f"[plan_cartesian_waypoints] Time to plan left arm waypoints: {(time.time() - start_time)*1000:.3f} ms")
             
         if len(r_targets) > 0:
             motion = self.listRT2Motion(
@@ -455,7 +465,8 @@ class AsyncInterface:
             )
             start_time = time.time()
             trajectory_r = self.planner.plan(motion)
-            print(f"[plan_cartesian_waypoints] Time to plan right arm waypoints: {(time.time() - start_time)*1000:.3f} ms")
+            if self.print_timing:
+                print(f"[plan_cartesian_waypoints] Time to plan right arm waypoints: {(time.time() - start_time)*1000:.3f} ms")
         return trajectory_l, trajectory_r
     
     async def run_trajectory(self, trajectory_l: Motion, trajectory_r: Motion):

@@ -4,12 +4,12 @@ from autolab_core import RigidTransform, Point
 import time
 
 def run():
-    interface = Interface(speed=0.20, file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/AUTOLAB_BWW_YuMi.jacobi-project')
+    interface = Interface(speed=0.70, file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/AUTOLAB_BWW_YuMi.jacobi-project')
     print(interface.get_FK('left'))
     print(interface.get_FK('right'))
     interface.home()
 
-    # interface.calibrate_grippers()
+    interface.calibrate_grippers()
     interface.open_grippers()
 
     wp1_l = RigidTransform(
