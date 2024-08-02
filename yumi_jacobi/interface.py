@@ -186,7 +186,8 @@ class AsyncInterface:
                 self.environment = self.planner.environment
                 self.yumi = self.environment.get_robot()
                 self.yumi.set_speed(speed)
-                self.studio = Studio()
+                # self.studio = Studio()
+                self.studio = None
                 self.visualize = False # Visualizing robot motion in Jacobi Studio causes a pause in execution, so by default it's off
         else:
             self.yumi = Yumi()
@@ -232,6 +233,14 @@ class AsyncInterface:
         elif arm == 'right':
             return self.driver_right.current_joint_position
         
+    async def stationary_signal_listener(self):    
+        while True:
+            if ~int(self.driver_left._get_signal('OUTPUT_STATIONARY_ROB_L').lvalue) or ~(self.driver_right._get_signal('OUTPUT_STATIONARY_ROB_R').lvalue):
+                t = time.time()
+                print("Robot is no longer stationary at time: ", t)
+                return t
+            await asyncio.sleep(0.01)
+
     async def calibrate_grippers(self):
         await self.driver_left.calibrate_gripper(sync=True)
         await asyncio.sleep(0.1)
@@ -327,8 +336,16 @@ class AsyncInterface:
 
         if self.studio is not None and self.visualize:
             self.studio.run_trajectory(trajectory)
+            
+        start_time = time.time()
+        print("[go_delta] Sent trajectory and starting signal listener at time: ", start_time)
+        
         result_left = self.driver_left.run_async(trajectory)
         result_right = self.driver_right.run_async(trajectory)
+        
+        result_stationary = await self.stationary_signal_listener()
+        print(f"[go_delta] Time to deploy: {(result_stationary - start_time)*1000} ms")
+        
         await result_left
         await result_right
         return result_left, result_right
@@ -362,8 +379,15 @@ class AsyncInterface:
             self.studio.run_trajectory(trajectory_l)
             self.studio.run_trajectory(trajectory_r)
             
+        start_time = time.time()
+        print("[go_cartesian_waypoints] Sent trajectory and starting signal listener at time: ", start_time)
+        
         if len(l_targets) > 0: result_left = self.driver_left.run_async(trajectory_l)
         if len(r_targets) > 0: result_right = self.driver_right.run_async(trajectory_r)
+        
+        result_stationary = await self.stationary_signal_listener()
+        print(f"[go_cartesian_waypoints] Time to deploy: {(result_stationary - start_time)*1000} ms")
+        
         if len(l_targets) > 0: await result_left
         if len(r_targets) > 0: await result_right
         return result_left, result_right
@@ -397,8 +421,16 @@ class AsyncInterface:
             if l_target is not None: self.studio.run_trajectory(trajectory_l)
             if r_target is not None: self.studio.run_trajectory(trajectory_r)
         
+        
+        start_time = time.time()
+        print("[go_linear_single] Sent trajectory and starting signal listener at time: ", start_time)
+        
         if l_target is not None: result_left = self.driver_left.run_async(trajectory_l)
         if r_target is not None: result_right = self.driver_right.run_async(trajectory_r)
+        
+        result_stationary = await self.stationary_signal_listener()
+        print(f"[go_linear_single] Time to deploy: {(result_stationary - start_time)*1000} ms")
+        
         if l_target is not None: await result_left
         if r_target is not None: await result_right
         return result_left, result_right

@@ -18,7 +18,10 @@ class GripperState(Enum):
             VACUUM_OFF_1 = 12
             VACUUM_OFF_2 = 13
 class YuMiArm(ABBDriver):
-    "Jacobi arm driver base class ABBDriver + SmartGripper interface for YuMi robot using Jacobi I/O signal hooks and interface for calling RAPID procedures"
+    """
+    Jacobi arm driver base class ABBDriver + SmartGripper interface for YuMi robot. 
+    SmartGripper controlled by I/O signals and interrupts that were manually exposed in RAPID modules.
+    """
 
     def __init__(self, planner, robot, host, port, module, version):
         super().__init__(planner, robot, host, port, module, version)
