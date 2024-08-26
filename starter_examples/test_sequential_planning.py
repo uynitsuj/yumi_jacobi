@@ -1,8 +1,9 @@
 from yumi_jacobi.interface import Interface
 from autolab_core import RigidTransform, Point
+from jacobi import Frame, CartesianWaypoint, LinearMotion, Motion, Studio, Trajectory
 
 def run():
-    interface = Interface(speed=0.26, file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/AUTOLAB_BWW_YuMi.jacobi-project')
+    interface = Interface(speed=0.26, file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/ABB_YUMI_AUTOLAB.jacobi-project')
     print(interface.get_FK('left'))
     print(interface.get_FK('right'))
     interface.home()
@@ -37,7 +38,47 @@ def run():
                   [0.5000000,  0.5000000, -0.7071068]],
         translation=[0.45, -0.08, 0.15]
     )
-    interface.go_cartesian_waypoints(l_targets = [wp1_l, wp2_l, wp3_l], r_targets=[wp1_r, wp2_r, wp3_r])
+    
+    l_motion1 = LinearMotion(
+        robot = interface.yumi.left,
+        start = interface.RT2CW(wp1_l), 
+        goal = interface.RT2CW(wp2_l)
+    )
+    r_motion1 = LinearMotion(
+        robot = interface.yumi.right,
+        start = interface.RT2CW(wp1_r), 
+        goal = interface.RT2CW(wp2_r)
+    )
+    l_motion2 = LinearMotion(
+        robot = interface.yumi.left,
+        start = interface.RT2CW(wp2_l), 
+        goal = interface.RT2CW(wp3_l)
+    )
+    r_motion2 = LinearMotion(
+        robot = interface.yumi.right,
+        start = interface.RT2CW(wp2_r), 
+        goal = interface.RT2CW(wp3_r)
+    )
+    l_motion3 = LinearMotion(
+        robot = interface.yumi.left,
+        start = interface.RT2CW(wp3_l), 
+        goal = interface.RT2CW(wp2_l)
+    )
+    r_motion3 = LinearMotion(
+        robot = interface.yumi.right,
+        start = interface.RT2CW(wp3_r), 
+        goal = interface.RT2CW(wp2_r)
+    )
+    
+    motions = [l_motion1, l_motion2]
+    
+    traj = interface.planner.plan(motions)
+    print(f'Calculation duration: {interface.planner.last_calculation_duration:0.2f} [ms]')
+    
+    interface.run_trajectories(traj)
+        
+    import pdb; pdb.set_trace()
+    
     interface.go_linear_single(l_target=wp1_l, r_target=wp1_r)
     interface.go_linear_single(l_target=wp2_l, r_target=wp2_r)
     interface.go_linear_single(l_target=wp3_l, r_target=wp3_r)
