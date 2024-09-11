@@ -22,7 +22,7 @@ def run():
     )
     wp3_l = RigidTransform(
         rotation=[[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
-        translation=[0.3, 0.3, 0.15]
+        translation=[0.6, 0.3, 0.15]
     )
     wp1_r = RigidTransform(
         rotation=[[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
@@ -39,42 +39,17 @@ def run():
         translation=[0.45, -0.08, 0.15]
     )
     
-    l_motion1 = LinearMotion(
-        robot = interface.yumi.left,
-        start = interface.RT2CW(wp1_l), 
-        goal = interface.RT2CW(wp2_l)
-    )
-    r_motion1 = LinearMotion(
-        robot = interface.yumi.right,
-        start = interface.RT2CW(wp1_r), 
-        goal = interface.RT2CW(wp2_r)
-    )
-    l_motion2 = LinearMotion(
-        robot = interface.yumi.left,
-        start = interface.RT2CW(wp2_l), 
-        goal = interface.RT2CW(wp3_l)
-    )
-    r_motion2 = LinearMotion(
-        robot = interface.yumi.right,
-        start = interface.RT2CW(wp2_r), 
-        goal = interface.RT2CW(wp3_r)
-    )
-    l_motion3 = LinearMotion(
-        robot = interface.yumi.left,
-        start = interface.RT2CW(wp3_l), 
-        goal = interface.RT2CW(wp2_l)
-    )
-    r_motion3 = LinearMotion(
-        robot = interface.yumi.right,
-        start = interface.RT2CW(wp3_r), 
-        goal = interface.RT2CW(wp2_r)
-    )
     
-    motions = [l_motion1, l_motion2]
+    # motions = [l_motion0, r_motion0, l_motion1, r_motion1, l_motion2]
     
-    traj = interface.planner.plan(motions)
-    print(f'Calculation duration: {interface.planner.last_calculation_duration:0.2f} [ms]')
+    # traj = interface.planner.plan(motions)
+    # print(f'Calculation duration: {interface.planner.last_calculation_duration:0.2f} [ms]')
     
+    # interface.run_trajectories(traj)
+    
+    traj = interface.plan_linear_waypoints(l_targets = [wp1_l, wp2_l, wp3_l])
+    import pdb; pdb.set_trace()
+    print(traj)
     interface.run_trajectories(traj)
         
     import pdb; pdb.set_trace()

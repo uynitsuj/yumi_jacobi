@@ -4,7 +4,7 @@ from typing import List, Tuple, Union, Literal
 
 from yumi_jacobi.yumi import YuMiArm
 import asyncio
-from jacobi import Frame, CartesianWaypoint, LinearMotion, Motion, Studio
+from jacobi import Frame, CartesianWaypoint, LinearMotion, Motion, Studio, Trajectory
 from jacobi import Planner
 from jacobi.robots import ABBYuMiIRB14000 as Yumi
 from jacobi.drivers import ABBDriver
@@ -26,6 +26,11 @@ class Interface:
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._start_loop, daemon=True)
         self._thread.start()
+        self.yumi = self._async_interface.yumi
+        self.planner = self._async_interface.planner
+        self.driver_left = self._async_interface.driver_left
+        self.driver_right = self._async_interface.driver_right
+        
 
     def _start_loop(self):
         asyncio.set_event_loop(self._loop)
@@ -67,6 +72,12 @@ class Interface:
         Move both arms to the home position 
         '''
         return self._run_coroutine(self._async_interface.home())
+    
+    def home2(self):
+        '''
+        Move both arms to the home position 
+        '''
+        return self._run_coroutine(self._async_interface.home2())
 
     def move_to(self, left_goal: List = None, right_goal: List = None, ignore_collisions=False):
         '''
@@ -93,11 +104,23 @@ class Interface:
         '''
         return self._run_coroutine(self._async_interface.go_linear_single(l_target, r_target))
     
-    def run_trajectory(self, trajectory_l: Motion, trajectory_r: Motion):
+    def run_trajectory(self, l_trajectory: Trajectory = None, r_trajectory: Trajectory = None):
         '''
         Run the planned trajectories for both arms
         '''
-        return self._run_coroutine(self._async_interface.run_trajectory(trajectory_l, trajectory_r))
+        return self._run_coroutine(self._async_interface.run_trajectory(l_trajectory, r_trajectory))
+    
+    def run_trajectory_no_async(self, l_trajectory: Trajectory = None, r_trajectory: Trajectory = None):
+        '''
+        Run the planned trajectories for both arms
+        '''
+        return self._async_interface.run_trajectory_no_async(l_trajectory, r_trajectory)
+    
+    def run_trajectories(self, trajectories: List[Trajectory]):
+        '''
+        Run the planned trajectories for both arms
+        '''
+        return self._run_coroutine(self._async_interface.run_trajectories(trajectories))
     
     def blend_into(self, trajectory_l: Motion, trajectory_r: Motion, duration=1.0):
         '''
@@ -105,12 +128,18 @@ class Interface:
         '''
         return self._run_coroutine(self._async_interface.blend_into(trajectory_l, trajectory_r, duration=duration))
     
-    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], starting_from_current_cfg = True) -> Tuple[Motion, Motion]:
+    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], start_from_current_cfg = True) -> List[Trajectory]:
         '''
         Plan cartesian waypoints for both arms
         '''
-        return self._async_interface.plan_cartesian_waypoints(l_targets, r_targets, starting_from_current_cfg=starting_from_current_cfg)
+        return self._async_interface.plan_cartesian_waypoints(l_targets, r_targets, start_from_current_cfg=start_from_current_cfg)
 
+    def plan_linear_waypoints(self, l_targets: List[RigidTransform] = [], r_targets: List[RigidTransform] = [], start_from_current_cfg = True) -> List[Trajectory]:
+        '''
+        Plan linear motion for both arms
+        '''
+        return self._async_interface.plan_linear_waypoints(l_targets, r_targets, start_from_current_cfg=start_from_current_cfg)
+    
     def get_FK(self, arm: Literal['left','right']) -> RigidTransform:
         '''
         Get the forward kinematics of the specified arm, returns a RigidTransform
@@ -140,6 +169,31 @@ class Interface:
         Convert list of RigidTransform to Motion (Jacobi object) 
         '''
         return self._async_interface.listRT2Motion(robot, start, wp_list)
+    
+    def listRT2LinearMotion(self, robot, start: Union[List, RigidTransform], goal: RigidTransform) -> Motion:
+        '''
+        Convert list of RigidTransform to LinearMotion (Jacobi object) 
+        '''
+        return self._async_interface.listRT2LinearMotion(robot, start, goal)
+    
+    def RT2CW(self, transform: RigidTransform) -> CartesianWaypoint:
+        '''
+        Convert RigidTransform (autolab_core) to CartesianWaypoint (Jacobi object)
+        '''
+        return self._async_interface.RT2CW(transform)
+    
+    def plan(self, motion: List[Motion]) -> List[Trajectory]:
+        '''
+        Plan a list of Motions
+        '''
+        return self.planner.plan(motion)
+    
+    def plan(self, motion: Motion) -> Trajectory:
+        '''
+        Plan a single Motion
+        '''
+        return self.planner.plan(motion)
+    
 class AsyncInterface:
     # orientation where the gripper is facing downwards
     GRIP_DOWN_R = np.diag([1, -1, -1])
@@ -162,6 +216,27 @@ class AsyncInterface:
             -1.34920282,
             -0.74859683,
             0.22,
+            -1.64836569,
+            1.20916355,
+            -2.83024169,
+        ]
+    )
+    L_HOME_STATE = np.array([
+        -0.5810662,
+        -1.34913424,
+        0.73567095,
+        0.55716616,
+        1.56402364, 
+        1.25265177,
+        2.84548536,
+    ]
+    )
+    R_HOME_STATE = np.array(
+        [
+            0.64224786,
+            -1.34920282,
+            -0.82859683,
+            0.52531042,
             -1.64836569,
             1.20916355,
             -2.83024169,
@@ -199,7 +274,7 @@ class AsyncInterface:
 
         self.planner = Planner(self.yumi)
 
-        module = ABBDriver.RapidModule(unit='ROB_L')
+        module = ABBDriver.RapidModule(unit='ROB_L', egm_config='default', max_speed_deviation=100.0)
         module.upload = False
         self.driver_left = YuMiArm(
             self.planner, self.yumi.left,
@@ -207,16 +282,19 @@ class AsyncInterface:
             module=module, version=ABBDriver.RobotWareVersion.RobotWare6,
         )
 
-        module = ABBDriver.RapidModule(unit='ROB_R')
+        module = ABBDriver.RapidModule(unit='ROB_R', egm_config='default', max_speed_deviation=100.0)
         module.upload = False
         self.driver_right = YuMiArm(
             self.planner, self.yumi.right,
             host='192.168.125.1', port=6512,
             module=module, version=ABBDriver.RobotWareVersion.RobotWare6,
         )
+        self.driver_left.path_deviation_error_threshold = 0.3
+        
+        self.driver_right.path_deviation_error_threshold = 0.3
 
         self.set_TCP()
-        self.print_timing = True
+        self.print_timing = False
 
     def set_TCP(self):
         self.yumi.left.flange_to_tcp = self.RT2Frame(self.l_tcp)
@@ -238,7 +316,8 @@ class AsyncInterface:
         while True:
             if ~int(self.driver_left._get_signal('OUTPUT_STATIONARY_ROB_L').lvalue) or ~(self.driver_right._get_signal('OUTPUT_STATIONARY_ROB_R').lvalue):
                 t = time.time()
-                print("Robot is no longer stationary at time: ", t)
+                if self.print_timing:
+                    print("Robot is no longer stationary at time: ", t)
                 return t
             await asyncio.sleep(0.01)
 
@@ -293,13 +372,27 @@ class AsyncInterface:
         r_pos = self.yumi.right.calculate_tcp(self.driver_right.current_joint_position)
         self.yumi.set_speed(0.2)
         if l_pos.translation[2] < .08 or r_pos.translation[2] < .08:
-            await self.go_delta([0, 0, 0.12 - l_pos.translation[2]],
-                                [0, 0, 0.12 - r_pos.translation[2]])
+            await self.go_delta([0, 0, 0.30 - l_pos.translation[2]],
+                                [0, 0, 0.30 - r_pos.translation[2]])
 
         result_left, result_right = await self.move_to(list(self.L_ARMS_CLEAR_STATE), list(self.R_ARMS_CLEAR_STATE))
         self.yumi.set_speed(self.speed)
         print("Homing done")
         return result_left, result_right
+    
+    async def home2(self):
+        l_pos = self.yumi.left.calculate_tcp(self.driver_left.current_joint_position)
+        r_pos = self.yumi.right.calculate_tcp(self.driver_right.current_joint_position)
+        self.yumi.set_speed(0.2)
+        if l_pos.translation[2] < .08 or r_pos.translation[2] < .08:
+            await self.go_delta([0, 0, 0.30 - l_pos.translation[2]],
+                                [0, 0, 0.30 - r_pos.translation[2]])
+
+        result_left, result_right = await self.move_to(list(self.L_HOME_STATE), list(self.R_HOME_STATE))
+        self.yumi.set_speed(self.speed)
+        print("Homing done")
+        return result_left, result_right
+    
     
     async def move_to(self, left_goal = None, right_goal=None, ignore_collisions=False):
         result_left, result_right = None, None
@@ -366,7 +459,7 @@ class AsyncInterface:
             trajectory_l = self.planner.plan(motion)
             if self.print_timing:
                 elapsed_time = (time.time() - start_time) * 1000 
-            print(f"[go_cartesian_waypoints] Time to plan left arm waypoints: {elapsed_time:.3f} ms")
+                print(f"[go_cartesian_waypoints] Time to plan left arm waypoints: {elapsed_time:.3f} ms")
                
         if len(r_targets) > 0:
             motion = self.listRT2Motion(
@@ -391,8 +484,9 @@ class AsyncInterface:
         if len(l_targets) > 0: result_left = self.driver_left.run_async(trajectory_l)
         if len(r_targets) > 0: result_right = self.driver_right.run_async(trajectory_r)
         
-        result_stationary = await self.stationary_signal_listener()
-        print(f"[go_cartesian_waypoints] Time to deploy: {(result_stationary - start_time)*1000} ms")
+        if self.print_timing:
+            result_stationary = await self.stationary_signal_listener()
+            print(f"[go_cartesian_waypoints] Time to deploy: {(result_stationary - start_time)*1000} ms")
         
         if len(l_targets) > 0: await result_left
         if len(r_targets) > 0: await result_right
@@ -436,49 +530,112 @@ class AsyncInterface:
         if l_target is not None: result_left = self.driver_left.run_async(trajectory_l)
         if r_target is not None: result_right = self.driver_right.run_async(trajectory_r)
         
-        result_stationary = await self.stationary_signal_listener()
         if self.print_timing:
+            result_stationary = await self.stationary_signal_listener()
             print(f"[go_linear_single] Time to deploy: {(result_stationary - start_time)*1000} ms")
         
         if l_target is not None: await result_left
         if r_target is not None: await result_right
         return result_left, result_right
 
-    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], starting_from_current_cfg = True) -> Tuple[Motion, Motion]:
+    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], start_from_current_cfg = True) -> List[Trajectory]:
         assert (len(l_targets) > 0 or len(r_targets) > 0), "No waypoints provided"
         if len(l_targets) > 0:
-            motion = self.listRT2Motion(
+            l_motion = self.listRT2Motion(
                 robot = self.yumi.left,
-                start = self.driver_left.current_joint_position if starting_from_current_cfg else self.RT2CW(l_targets[0]), 
-                wp_list = l_targets if starting_from_current_cfg else l_targets[1:]
+                start = self.driver_left.current_joint_position if start_from_current_cfg else self.RT2CW(l_targets[0]), 
+                wp_list = l_targets if start_from_current_cfg else l_targets[1:]
             )
-            start_time = time.time()
-            trajectory_l = self.planner.plan(motion)
-            if self.print_timing:
-                print(f"[plan_cartesian_waypoints] Time to plan left arm waypoints: {(time.time() - start_time)*1000:.3f} ms")
-            
         if len(r_targets) > 0:
-            motion = self.listRT2Motion(
+            r_motion = self.listRT2Motion(
                 robot = self.yumi.right,
-                start = self.driver_right.current_joint_position if starting_from_current_cfg else self.RT2CW(r_targets[0]),
-                wp_list = r_targets if starting_from_current_cfg else r_targets[1:]
+                start = self.driver_right.current_joint_position if start_from_current_cfg else self.RT2CW(r_targets[0]),
+                wp_list = r_targets if start_from_current_cfg else r_targets[1:]
             )
-            start_time = time.time()
-            trajectory_r = self.planner.plan(motion)
-            if self.print_timing:
-                print(f"[plan_cartesian_waypoints] Time to plan right arm waypoints: {(time.time() - start_time)*1000:.3f} ms")
-        return trajectory_l, trajectory_r
+        motion = [l_motion, r_motion]
+        trajectory = self.planner.plan(motion)
+        
+        if self.print_timing:
+            print(f'[plan_linear] Calculation duration: {self.planner.last_calculation_duration:0.2f} [ms]')
+            
+        return trajectory
     
-    async def run_trajectory(self, trajectory_l: Motion, trajectory_r: Motion):
+    def plan_linear_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], start_from_current_cfg = True) -> List[Trajectory]:
+        assert (len(l_targets) > 0 or len(r_targets) > 0), "No waypoints provided"
+        
+        motions = []
+        if len(l_targets) > 0:
+            if start_from_current_cfg:
+                motions.append(
+                    LinearMotion(
+                        robot = self.yumi.left,
+                        start = self.driver_left.current_joint_position, 
+                        goal = self.RT2CW(l_targets[0])
+                ))
+            for i in range(len(l_targets) - 1):
+                motions.append(LinearMotion(
+                    robot = self.yumi.left,
+                    start = self.RT2CW(l_targets[i]), 
+                    goal = self.RT2CW(l_targets[i+1])
+                ))
+                
+        if len(r_targets) > 0:
+            if start_from_current_cfg:
+                motions.append(
+                    LinearMotion(
+                        robot = self.yumi.right,
+                        start = self.driver_right.current_joint_position, 
+                        goal = self.RT2CW(r_targets[0])
+                ))
+            for i in range(len(r_targets) - 1):
+                motions.append(LinearMotion(
+                    robot = self.yumi.right,
+                    start = self.RT2CW(r_targets[i]), 
+                    goal = self.RT2CW(r_targets[i+1])
+                ))
+        print(f'planning {len(motions)} motions')
+        trajectory = self.planner.plan(motions)
+        # if self.print_timing:
+        print(f'[plan_linear_waypoints] Calculation duration: {self.planner.last_calculation_duration:0.2f} [ms]')
+        
+        return trajectory
+    
+    
+    # def plan(self, motion: List[Motion]) -> List[Trajectory]:
+    #     return self.planner.plan(motion)
+    
+    # def plan(self, motion: Motion) -> Trajectory:
+    #     return self.planner.plan(motion)
+    
+    async def run_trajectory(self, l_trajectory: Trajectory = None, r_trajectory: Trajectory = None):
+        result_left, result_right = None, None
         if self.studio is not None and self.visualize:
-            self.studio.run_trajectory(trajectory_l)
-            self.studio.run_trajectory(trajectory_r)
-        result_left = self.driver_left.run_async(trajectory_l)
-        result_right = self.driver_right.run_async(trajectory_r)
-        await result_left
-        await result_right
+            if l_trajectory is not None: self.studio.run_trajectory(l_trajectory)
+            if r_trajectory is not None: self.studio.run_trajectory(r_trajectory)
+        if l_trajectory is not None: result_left = self.driver_left.run_async(l_trajectory)
+        if r_trajectory is not None: result_right = self.driver_right.run_async(r_trajectory)
+        if l_trajectory is not None: await result_left
+        if r_trajectory is not None: await result_right
+        return result_left, result_right
+    
+    def run_trajectory_no_async(self, l_trajectory: Trajectory = None, r_trajectory: Trajectory = None):
+        result_left, result_right = None, None
+        if self.studio is not None and self.visualize:
+            if l_trajectory is not None: self.studio.run_trajectory(l_trajectory)
+            if r_trajectory is not None: self.studio.run_trajectory(r_trajectory)
+        if l_trajectory is not None: result_left = self.driver_left.run(l_trajectory)
+        if r_trajectory is not None: result_right = self.driver_right.run(r_trajectory)
         return result_left, result_right
 
+    async def run_trajectories(self, trajectories: List[Trajectory]):
+        results_left, results_right = [], []
+        for trajectory in trajectories:
+            result_left, result_right = await self.run_trajectory(trajectory, trajectory)
+            results_left.append(result_left)
+            results_right.append(result_right)
+            
+        return results_left, results_right
+    
     async def blend_into(self, trajectory_l: Motion, trajectory_r: Motion, duration=1.0):
         if self.studio is not None and self.visualize:
             self.studio.run_trajectory(trajectory_l)
@@ -489,16 +646,29 @@ class AsyncInterface:
         await result_right
         return result_left, result_right
     
-    def listRT2Motion(self, robot, start: List, wp_list: List[RigidTransform]) -> Motion:
+    def listRT2Motion(self, robot, start: Union[List, RigidTransform], wp_list: List[RigidTransform]) -> Motion:
         # Convert list of RigidTransform to Motion (Jacobi object) 
+        if isinstance(start, RigidTransform):
+            start = self.RT2Frame(start)
         motion = Motion(
-            robot, 
-            start,
-            self.RT2Frame(wp_list[-1])
+            robot = robot, 
+            start = start,
+            goal = self.RT2Frame(wp_list[-1])
         )
         motion.waypoints = [self.RT2Frame(q) for q in wp_list[:-1]]
         return motion
 
+    def listRT2LinearMotion(self, robot, start: Union[List, RigidTransform], goal: RigidTransform) -> Motion:
+        # Convert list of RigidTransform to Motion (Jacobi object) 
+        if isinstance(start, RigidTransform):
+            start = self.RT2Frame(start)
+        motion = LinearMotion(
+            robot = robot, 
+            start = start,
+            goal = self.RT2Frame(goal)
+        )
+        return motion
+    
     def RT2CW(self, transform: RigidTransform) -> CartesianWaypoint:
         # Convert RigidTransform (autolab_core) to CartesianWaypoint (Jacobi object)
         return CartesianWaypoint(
