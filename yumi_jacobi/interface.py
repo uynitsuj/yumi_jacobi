@@ -215,7 +215,7 @@ class AsyncInterface:
             0.64224786,
             -1.34920282,
             -0.74859683,
-            0.22,
+            0.18,
             -1.64836569,
             1.20916355,
             -2.83024169,
@@ -236,8 +236,8 @@ class AsyncInterface:
             0.64224786,
             -1.34920282,
             -0.82859683,
-            0.52531042,
-            -1.64836569,
+            0.55531042,
+            -1.84836569,
             1.20916355,
             -2.83024169,
         ]
@@ -264,6 +264,8 @@ class AsyncInterface:
                 # self.studio = Studio()
                 self.studio = None
                 self.visualize = False # Visualizing robot motion in Jacobi Studio causes a pause in execution, so by default it's off
+            else:
+                raise FileNotFoundError(f"File {file} does not exist")
         else:
             self.yumi = Yumi()
             self.yumi.set_speed(speed)
