@@ -51,7 +51,8 @@ class YuMiArm(ABBDriver):
         return GripperState(int(self._get_signal(self._gripper_state_IO).lvalue))
     
     def get_gripper_pos(self):
-        return int(self._get_signal(self._gripper_pos_read_IO).lvalue)
+        """Returns the current position of the gripper in meters"""
+        return int(self._get_signal(self._gripper_pos_read_IO).lvalue)/10000
 
     async def initialize_gripper(self, sync=False):
         # Unecessary?
