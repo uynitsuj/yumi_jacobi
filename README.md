@@ -7,11 +7,14 @@ Primary reasons for the wrapper are to 1. Allow AUTOLAB-Core `RigidTransform` ob
 For instructions regarding installation, getting started, and for general documentation refer to [docs.jacobirobotics.com](https://docs.jacobirobotics.com).
 
 ## Installation
-The Jacobi Cloud Python package can be installed from PyPI via
+The Jacobi Python package and YuMi drivers can be installed from PyPI via
 
 ```
 pip install jacobi-motion
+pip install jacobi-abb-driver
 ```
+
+Currently tested up to 'jacobi-motion==0.0.43' and 'jacobi-abb-driver==0.0.40'
 
 In case no package could be found, make sure to upgrade pip to the latest available version via pip install pip --upgrade.
 
