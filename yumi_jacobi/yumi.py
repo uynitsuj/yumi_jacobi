@@ -30,11 +30,13 @@ class YuMiArm(ABBDriver):
             self._gripper_comm = ['192.168.125.40', 'Hand_L']
             self._gripper_state_IO = 'cmd_GripperState_L'
             self._gripper_pos_IO = 'cmd_GripperPos_L'
+            self._gripper_pos_read_IO = 'hand_ActualPosition_L'
         elif self.port == 6512:
             self._side = 'right'
             self._gripper_comm = ['192.168.125.30', 'Hand_R']
             self._gripper_state_IO = 'cmd_GripperState_R'
             self._gripper_pos_IO = 'cmd_GripperPos_R'
+            self._gripper_pos_read_IO = 'hand_ActualPosition_R'
         self._set_signal(self._gripper_state_IO, 0)
         self._set_signal(self._gripper_pos_IO, 0)
 
@@ -47,6 +49,9 @@ class YuMiArm(ABBDriver):
     
     def get_gripper_state(self):
         return GripperState(int(self._get_signal(self._gripper_state_IO).lvalue))
+    
+    def get_gripper_pos(self):
+        return int(self._get_signal(self._gripper_pos_read_IO).lvalue)
 
     async def initialize_gripper(self, sync=False):
         # Unecessary?

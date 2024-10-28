@@ -2,12 +2,17 @@ from yumi_jacobi.interface import Interface
 from autolab_core import RigidTransform, Point
 
 def run():
-    interface = Interface(speed=0.26, file='/home/justinyu/multicable-decluttering/yumi_jacobi/starter_examples/AUTOLAB_BWW_YuMi.jacobi-project')
+    interface = Interface(speed=0.26)
     print(interface.get_FK('left'))
     print(interface.get_FK('right'))
     interface.home()
     interface.calibrate_grippers()
     interface.open_grippers()
+    print(interface.driver_left.get_gripper_pos())
+    print(interface.driver_right.get_gripper_pos())
+    interface.close_grippers()
+    print(interface.driver_left.get_gripper_pos())
+    print(interface.driver_right.get_gripper_pos())
 
     wp1_l = RigidTransform(
         rotation=[[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
