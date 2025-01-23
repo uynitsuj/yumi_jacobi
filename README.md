@@ -14,7 +14,7 @@ pip install jacobi-motion
 pip install jacobi-abb-driver
 ```
 
-Currently tested up to `jacobi-motion==0.0.43` and `jacobi-abb-driver==0.0.40` though later versions may still work depending on support
+Currently tested up to `jacobi-motion==0.0.43` and `jacobi-abb-driver==0.0.40` though later versions may still work depending on support and code compatibility.
 
 In case no package could be found, make sure to upgrade pip to the latest available version via pip install pip --upgrade.
 
