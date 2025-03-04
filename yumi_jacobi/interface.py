@@ -135,17 +135,17 @@ class Interface:
         '''
         return self._run_coroutine(self._async_interface.blend_into(trajectory_l, trajectory_r, duration=duration))
     
-    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], start_from_current_cfg = True) -> List[Trajectory]:
+    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], start_from_current_cfg = True, return_motions = True) -> List[Trajectory]:
         '''
         Plan cartesian waypoints for both arms
         '''
-        return self._async_interface.plan_cartesian_waypoints(l_targets, r_targets, start_from_current_cfg=start_from_current_cfg)
+        return self._async_interface.plan_cartesian_waypoints(l_targets, r_targets, start_from_current_cfg=start_from_current_cfg, return_motions = True)
 
-    def plan_linear_waypoints(self, l_targets: List[RigidTransform] = [], r_targets: List[RigidTransform] = [], start_from_current_cfg = True) -> List[Trajectory]:
+    def plan_linear_waypoints(self, l_targets: List[RigidTransform] = [], r_targets: List[RigidTransform] = [], start_from_current_cfg = True, return_motions = True) -> List[Trajectory]:
         '''
         Plan linear motion for both arms
         '''
-        return self._async_interface.plan_linear_waypoints(l_targets, r_targets, start_from_current_cfg=start_from_current_cfg)
+        return self._async_interface.plan_linear_waypoints(l_targets, r_targets, start_from_current_cfg=start_from_current_cfg, return_motions = True)
     
     def get_FK(self, arm: Literal['left','right']) -> RigidTransform:
         '''
@@ -584,7 +584,7 @@ class AsyncInterface:
         
         return result_left, result_right
 
-    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], start_from_current_cfg = True, return_motion = True) -> List[Trajectory]:
+    def plan_cartesian_waypoints(self, l_targets: List[RigidTransform], r_targets: List[RigidTransform], start_from_current_cfg = True, return_motions = True) -> List[Trajectory]:
         assert (len(l_targets) > 0 or len(r_targets) > 0), "No waypoints provided"
         if len(l_targets) > 0:
             l_motion = self.listRT2Motion(
@@ -599,7 +599,7 @@ class AsyncInterface:
                 wp_list = r_targets if start_from_current_cfg else r_targets[1:]
             )
         motion = [l_motion, r_motion]
-        if return_motion:
+        if return_motions:
             return motion
         trajectory = self.planner.plan(motion)
         
